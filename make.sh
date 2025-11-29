@@ -1,5 +1,5 @@
 
-gcc -c *.c
-gcc -o game *.o -lraylib -lm -D_REETRANT -I/usr/local/include -L/usr/local/lib
+gcc -c *.c -lraylib -lm -D_REETRANT 
+gcc -o game *.o -lraylib -lm -D_REETRANT 
 rm *.o
 ./game

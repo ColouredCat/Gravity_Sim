@@ -3,20 +3,24 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define WIDTH 1200
 #define HEIGHT 700
 #define FPS 60
 #define CAM_ROTATE_SPEED 0.5f
 
-#define NUM_OBJECTS 3
+#define NUM_OBJECTS 200
 #define SCENE_NUM 2
 
 #define G 6.6743*pow(10, -12)
-#define VEL_SCALE 0.0001
+#define VEL_SCALE 0.00001
 
 #define BACKGROUND BLACK
 #define FOREGROUND WHITE
+
+#define randint(a,b) (rand()%(b-a)) - a
 
 // Single Object Functions
 
@@ -65,15 +69,32 @@ void update_object(struct object* b){
     DrawSphereWires(b->pos, b->radius, 10, 8, FOREGROUND);
 }
 
+void check_collision(struct object* b1, struct object* b2){
+    if (CheckCollisionSpheres(b1->pos, b1->radius, b2->pos, b2->radius)){
+        //conserve mass
+        b1->mass += b2->mass;
+        b2->mass = 0;
+        calculate_radius(b1);
+        calculate_radius(b2);
+
+        //conserve momentum
+        b1->vel.x += b2->vel.x;
+        b1->vel.y += b2->vel.y;
+        b1->vel.z += b2->vel.z;
+    }
+}
+
+
 // Multiple Object Functions
 
 struct object x[NUM_OBJECTS];
 void update_objects(){
     for (int a = 0; a < NUM_OBJECTS; a++){
-        update_object(&x[a]);
+        if (x[a].mass != 0) { update_object(&x[a]); }
         for (int b = 0; b < NUM_OBJECTS; b++){
-            if (a != b){
+            if (a != b && x[a].mass != 0 && x[b].mass != 0){
                 calculate_gravity(&x[a], &x[b]);
+                check_collision(&x[a], &x[b]);
             }
         }
     }
@@ -98,7 +119,7 @@ char* scene_text;
 
 void scene_1(){
     scene_text = "Scene 1 : Two bodies orbiting a dense central mass";
-    for (int i = 0; i < NUM_OBJECTS; i++) {x[i].radius = 0;}
+    for (int i = 0; i < NUM_OBJECTS; i++) {x[i].mass = 0;}
     x[0].pos = (Vector3){0.0f, 0.0f, 0.0f};
     x[0].vel = (Vector3){0.0f, 0.0f, 0.0f};
     x[0].mass = pow(10, 10);
@@ -122,26 +143,43 @@ void scene_1(){
 }
 
 void scene_2(){
-    scene_text = "Scene 2 : Two bodies orbiting each other";
-    for (int i = 0; i < NUM_OBJECTS; i++) {x[i].radius = 0;}
+    scene_text = "Scene 2 : Two bodies coliding into each other";
+    for (int i = 0; i < NUM_OBJECTS; i++) {x[i].mass = 0;}
     x[0].pos = (Vector3){0.0f, 0.0f, 0.0f};
     x[0].vel = (Vector3){-0.0f, 0.0f, 0.0f};
-    x[0].mass = pow(10, 10);
-    x[0].density = pow(7, 10);
+    x[0].mass = 1000;
+    x[0].density = 100;
     calculate_radius(&x[0]);
 
     x[1].pos = (Vector3){17.0f, 10.0f, 13.0f};
-    x[1].vel = (Vector3){-0.0f, -0.3f, -0.2f};
-    x[1].mass = 22000;
-    x[1].density = 1000;
+    x[1].vel = (Vector3){-0.0f, -0.0f, -0.0f};
+    x[1].mass = 1000;
+    x[1].density = 100;
     calculate_radius(&x[1]);
 }
 
+void scene_3(){
+    const int max_dist = 100;
+    const Color colours[5] = {RED, BLUE, GREEN, PURPLE, ORANGE};
+    scene_text = "Scene 3 : Many objects clumping together";
+
+    for (int i = 0; i < NUM_OBJECTS; i++) {
+        x[i].pos = (Vector3){randint(0, max_dist), randint(0, max_dist), randint(0, max_dist)};
+        x[i].vel = (Vector3){-0.0f, 0.0f, 0.0f};
+        x[i].mass = 10;
+        x[i].density = 10;
+        x[i].col = colours[rand()%5];
+        calculate_radius(&x[i]);
+    }
+}
+
 void check_scene_change(){
-    if (IsKeyPressed(KEY_F1)){
+    if (IsKeyPressed(KEY_KP_1)){
         scene_1();
-    } else if (IsKeyPressed(KEY_F2)){
+    } else if (IsKeyPressed(KEY_KP_2)){
         scene_2();
+    } else if (IsKeyPressed(KEY_KP_3)){
+        scene_3();
     }
 }
 
@@ -152,6 +190,9 @@ int main(){
     int display = GetCurrentMonitor();
     SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
     ToggleFullscreen();
+
+    time_t t = clock();
+    srand(t);
 
     //setup camera so it is looking down on the scene
     Camera camera = { 0 };

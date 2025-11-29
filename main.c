@@ -8,12 +8,15 @@
 #define HEIGHT 700
 #define FPS 60
 #define CAM_ROTATE_SPEED 0.5f
+
 #define NUM_OBJECTS 3
+#define SCENE_NUM 2
+
 #define G 6.6743*pow(10, -12)
+#define VEL_SCALE 0.0001
+
 #define BACKGROUND BLACK
 #define FOREGROUND WHITE
-#define SCENE_NUM 2
-#define VEL_SCALE 0.0001
 
 // Single Object Functions
 
@@ -23,43 +26,43 @@ struct object {
     float radius, mass, density, volume;
 };
 
-void calculate_radius(struct object* y){
+void calculate_radius(struct object* b){
     //calculate the correct radius to draw of an object
     //volume = mass/density
-    y->volume = y->mass/y->density;
+    b->volume = b->mass/b->density;
     //volume = (4/3)*PI*r^3 so r = cbrt(volume/(4/3)*PI)
-    y->radius = cbrt(y->volume/((4/3)*PI));
+    b->radius = cbrt(b->volume/((4/3)*PI));
 }
 
-void calculate_gravity(struct object* y1, struct object* y2){
+void calculate_gravity(struct object* b1, struct object* b2){
     //first, calculate the distance between the two objects
-    double xdif = y1->pos.x - y2->pos.x;
-    double ydif = y1->pos.y - y2->pos.y;
-    double zdif = y1->pos.z - y2->pos.z;
+    double xdif = b1->pos.x - b2->pos.x;
+    double ydif = b1->pos.y - b2->pos.y;
+    double zdif = b1->pos.z - b2->pos.z;
     double dist = sqrt(pow(xdif, 2) + pow(ydif, 2) + pow(zdif, 2));
     //printf("Distance : %f\n", (float)dist);
 
-    /*1. applying newtons law of univeral gravitation  - doesn't realy work
+    /*1. applying newtons law of universal gravitation  - doesn't really work
     y1->vel.x -= (G * y1->mass * y2->mass * xdif) / pow(dist, 3);
     y1->vel.y -= (G * y1->mass * y2->mass * ydif) / pow(dist, 3);
     y1->vel.z -= (G * y1->mass * y2->mass * zdif) / pow(dist, 3);*/
     //2. force(x/y/z) = force_m * cos(angle between (x/y/z) and force)
-    double force_m = (G * y1->mass * y2->mass) / pow(dist, 2);
+    double force_m = (G * b1->mass * b2->mass) / pow(dist, 2);
     //printf("%d\n", force_m);
-    y1->vel.x -= (force_m * (xdif/force_m))*VEL_SCALE;
-    y1->vel.y -= (force_m * (ydif/force_m))*VEL_SCALE;
-    y1->vel.z -= (force_m * (zdif/force_m))*VEL_SCALE;
+    b1->vel.x -= (force_m * (xdif/force_m))*VEL_SCALE;
+    b1->vel.y -= (force_m * (ydif/force_m))*VEL_SCALE;
+    b1->vel.z -= (force_m * (zdif/force_m))*VEL_SCALE;
     //printf("Velocity : %f, %f, %f\n", y1->vel.x, y1->vel.y, y1->vel.z);
 }
 
-void update_object(struct object* y){
+void update_object(struct object* b){
     //update position
-    y->pos.x += y->vel.x;
-    y->pos.y += y->vel.y;
-    y->pos.z += y->vel.z;
+    b->pos.x += b->vel.x;
+    b->pos.y += b->vel.y;
+    b->pos.z += b->vel.z;
     //draw the object
-    DrawSphere(y->pos, y->radius, y->col);
-    DrawSphereWires(y->pos, y->radius, 10, 8, FOREGROUND);
+    DrawSphere(b->pos, b->radius, b->col);
+    DrawSphereWires(b->pos, b->radius, 10, 8, FOREGROUND);
 }
 
 // Multiple Object Functions
@@ -89,9 +92,12 @@ void rotate_camera(Camera* camera){
     else if (mouse.y < 0){ camera->position.z -= CAM_ROTATE_SPEED*3; }
 }
 
-// Scenarios 
+// scenes 
+// have a short description for each scene
+char* scene_text;
 
-void scenario_1(){
+void scene_1(){
+    scene_text = "Scene 1 : Two bodies orbiting a dense central mass";
     for (int i = 0; i < NUM_OBJECTS; i++) {x[i].radius = 0;}
     x[0].pos = (Vector3){0.0f, 0.0f, 0.0f};
     x[0].vel = (Vector3){0.0f, 0.0f, 0.0f};
@@ -115,8 +121,8 @@ void scenario_1(){
     calculate_radius(&x[2]);
 }
 
-/*
-void scenario_2(){
+void scene_2(){
+    scene_text = "Scene 2 : Two bodies orbiting each other";
     for (int i = 0; i < NUM_OBJECTS; i++) {x[i].radius = 0;}
     x[0].pos = (Vector3){0.0f, 0.0f, 0.0f};
     x[0].vel = (Vector3){-0.0f, 0.0f, 0.0f};
@@ -129,28 +135,15 @@ void scenario_2(){
     x[1].mass = 22000;
     x[1].density = 1000;
     calculate_radius(&x[1]);
-    
-    x[2].pos = (Vector3){7.0f, 2.0f, 3.0f};
-    x[2].vel = (Vector3){0.1f, 0.2f, 0.05f};
-    x[2].mass = 0.22;
-    x[2].density = 0.025;
-    calculate_radius(&x[2]);
 }
 
-//store the scenario descriptions
-const char* s_descriptions[SCENE_NUM] = {"Scenario 1 : Two bodies orbiting a dense cental mass", 
-    "Scenario 2 : One body orbiting a dense cental mass",};
-int s_current = 0;
-
 void check_scene_change(){
-    if (IsKeyPressed(KEY_KP_1)){
-        scenario_1();
-        s_current = 1;
-    } else if (IsKeyPressed(KEY_KP_2)){
-        scenario_2();
-        s_current = 2;
+    if (IsKeyPressed(KEY_F1)){
+        scene_1();
+    } else if (IsKeyPressed(KEY_F2)){
+        scene_2();
     }
-}*/
+}
 
 int main(){
     //setup window
@@ -168,7 +161,7 @@ int main(){
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    scenario_1();
+    scene_1();
     
     //mainloop
     while (!WindowShouldClose()) {
@@ -176,7 +169,7 @@ int main(){
 
         ClearBackground(BACKGROUND);
         rotate_camera(&camera);
-        //check_scene_change();
+        check_scene_change();
 
         BeginMode3D(camera);
         update_objects();
@@ -184,7 +177,7 @@ int main(){
         EndMode3D();
 
         DrawFPS(50,50);
-        //DrawText(s_descriptions[s_current], WIDTH/2, 50, 20, DARKGREEN);
+        DrawText(scene_text, WIDTH/2, 50, 20, DARKGREEN);
 
         EndDrawing();
     }

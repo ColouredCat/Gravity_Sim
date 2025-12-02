@@ -1,4 +1,10 @@
 
+/*
+GRAVITY SIM
+A simulation of the effects of gravity in a vacum
+Written by Robert Jordan
+*/
+
 #include "raylib.h"
 #include <stdio.h>
 #include "raymath.h"
@@ -6,23 +12,29 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define WIDTH 1200
-#define HEIGHT 700
+//include emscripten for web builds
+#if defined(PLATFORM_WEB)
+    #include <emscripten/emscripten.h>
+#endif
+
 #define FPS 60
 #define CAM_ROTATE_SPEED 0.7f
-
 #define MAX_OBJECTS 50
 
 #define G 6.6743*pow(10, -11)
 #define VEL_CHANGE 0.000001
-float vel_scale = 0.00001;
 
 #define BACKGROUND BLACK
 #define FOREGROUND WHITE
 #define TEXT_SCALE 20
-#define TEXT_COLOUR DARKGREEN
+#define TEXT_COLOUR (Color){15, 189, 61, 255}
 
 #define randint(a,b) (rand()%(b-a)) - b
+
+//global variables
+int WIDTH, HEIGHT;
+float vel_scale = 0.00001;
+Camera camera = { 0 };
 
 // Single Object Functions
 
@@ -204,18 +216,16 @@ void scene_4(){
 }
 
 void check_scene_change(){
-    if (IsKeyPressed(KEY_KP_1)){
+    if (IsKeyPressed(KEY_ONE)){
         scene_1();
-    } else if (IsKeyPressed(KEY_KP_2)){
+    } else if (IsKeyPressed(KEY_TWO)){
         scene_2();
-    } else if (IsKeyPressed(KEY_KP_3)){
+    } else if (IsKeyPressed(KEY_THREE)){
         scene_3();
-    } else if (IsKeyPressed(KEY_KP_4)){
+    } else if (IsKeyPressed(KEY_FOUR)){
         scene_4();
     }
 }
-
-Camera camera = { 0 };
 
 void draw_frame(){
     char vel_text[30];
@@ -242,11 +252,19 @@ void draw_frame(){
 }
 
 int main(){
+
+    #if defined(PLATFORM_WEB)
+        WIDTH = 1200;
+        HEIGHT = 700;
+    #else
+        //otherwise, use maximum screen size posible
+        int display = GetCurrentMonitor();
+        WIDTH = GetMonitorWidth(display);
+        HEIGHT = GetMonitorHeight(display);
+    #endif
+
     //setup window
     InitWindow(WIDTH, HEIGHT, "Gravity");
-    SetTargetFPS(FPS);
-    int display = GetCurrentMonitor();
-    SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
     ToggleFullscreen();
 
     time_t t = clock();
@@ -261,10 +279,15 @@ int main(){
 
     scene_1();
 
-    //mainloop
-    while (!WindowShouldClose()) {
-        draw_frame();
-    }
+    #if defined(PLATFORM_WEB)
+        emscripten_set_main_loop(draw_frame, 0, 1);
+    #else
+        SetTargetFPS(FPS);
+        //mainloop
+        while (!WindowShouldClose()) {
+            draw_frame();
+        }
+    #endif
     
     CloseWindow();
 }

@@ -118,16 +118,19 @@ void update_objects(){
 void rotate_camera(Camera* camera){
     //rotate the camera on certain key presses
     Vector2 mouse = GetMouseWheelMoveV();
-    if (IsKeyDown(KEY_RIGHT)){ camera->position.x += CAM_ROTATE_SPEED; }
-    else if (IsKeyDown(KEY_LEFT)){ camera->position.x -= CAM_ROTATE_SPEED; }
-    if (IsKeyDown(KEY_UP)){ camera->position.y += CAM_ROTATE_SPEED; }
-    else if (IsKeyDown(KEY_DOWN)){ camera->position.y -= CAM_ROTATE_SPEED; }
+    if (IsKeyDown(KEY_D)){ camera->position.x += CAM_ROTATE_SPEED; }
+    else if (IsKeyDown(KEY_A)){ camera->position.x -= CAM_ROTATE_SPEED; }
+    if (IsKeyDown(KEY_W)){ camera->position.y += CAM_ROTATE_SPEED; }
+    else if (IsKeyDown(KEY_S)){ camera->position.y -= CAM_ROTATE_SPEED; }
     if (mouse.x > 0){ camera->position.z += CAM_ROTATE_SPEED*3; }
     else if (mouse.y < 0){ camera->position.z -= CAM_ROTATE_SPEED*3; }
 
     //speed up or slow down the simulation
     if (IsKeyDown(KEY_PERIOD) && vel_scale < 1){ vel_scale += VEL_CHANGE; }
     else if (IsKeyDown(KEY_COMMA) && vel_scale > 0){ vel_scale -= VEL_CHANGE; }
+    else if (IsKeyDown(KEY_R) && vel_scale > 0){
+        vel_scale = VEL_CHANGE*10; 
+    }
 }
 
 // scenes 
@@ -146,15 +149,15 @@ void scene_1(){
 
     x[1].pos = (Vector3){17.0f, 10.0f, 13.0f};
     x[1].vel = (Vector3){-0.1f, -0.3f, -0.2f};
-    x[1].mass = 22000000000;
-    x[1].density = 1000000000;
+    x[1].mass = 2200000;
+    x[1].density = 10000;
     x[1].col = BLUE;
     calculate_radius(&x[1]);
 
     x[2].pos = (Vector3){7.0f, 0.0f, 3.0f};
     x[2].vel = (Vector3){0.1f, 0.3f, 0.2f};
-    x[2].mass = 3200000;
-    x[2].density = 200000;
+    x[2].mass = 32000;
+    x[2].density = 2000;
     x[2].col = BLUE;
     calculate_radius(&x[2]);
 }
@@ -199,7 +202,7 @@ void scene_4(){
     const Color colours[5] = {RED, BLUE, GREEN, PURPLE, ORANGE};
     scene_text = "Scene 4 : Ring of particles orbiting a central mass";
 
-    for (int i = 0; i < num_objects; i++) {
+    for (int i = 1; i < num_objects; i++) {
         x[i].pos = (Vector3){randint(min_dist, max_dist), randint(min_dist, max_dist), randint(min_dist, max_dist)};
         x[i].vel = (Vector3){randint(-1, 1)/10, randint(-1, 1)/10, randint(-1, 1)/10};
         x[i].mass = randint(1, 10);
@@ -246,7 +249,7 @@ void draw_frame(){
 
     sprintf(vel_text, "Velocity scale : %f", vel_scale);
     DrawText(vel_text, 50, 100, TEXT_SCALE, TEXT_COLOUR);
-    DrawText("Controls :\n > / < to increase/decrease velocity\n WASD to move camera\n 12345 to select scene", 50, 150, TEXT_SCALE, TEXT_COLOUR);
+    DrawText("Controls :\n < / > to decrease/increase velocity\n WASD to move camera\n 12345 to select scene\n R to reset velocity", 50, 150, TEXT_SCALE, TEXT_COLOUR);
 
     EndDrawing();
 }

@@ -33,8 +33,10 @@ Written by Robert Jordan
 
 //global variables
 int WIDTH, HEIGHT;
+int USE_SHADERS = 1;
 float vel_scale = 0.00001;
 Camera camera = { 0 };
+Shader shader = { 0 };
 
 // Single Object Functions
 
@@ -74,9 +76,17 @@ void update_object(struct object* b){
     b->pos.x += b->vel.x;
     b->pos.y += b->vel.y;
     b->pos.z += b->vel.z;
-    //draw the object
-    DrawSphere(b->pos, b->radius, b->col);
-    DrawSphereWires(b->pos, b->radius, 10, 8, FOREGROUND);
+    //draw the object, with shaders to show the velocity on deskptop
+
+    if (USE_SHADERS){
+        BeginShaderMode(shader);
+        DrawSphere(b->pos, b->radius, b->col);
+        EndShaderMode();
+        DrawSphereWires(b->pos, b->radius, 10, 8, FOREGROUND);
+    } else {
+        DrawSphere(b->pos, b->radius, b->col);
+        DrawSphereWires(b->pos, b->radius, 10, 8, FOREGROUND);
+    }
 }
 
 void check_collision(struct object* b1, struct object* b2){
@@ -280,6 +290,9 @@ int main(){
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
+    //enable shaders on desktop
+    if(USE_SHADERS) shader = LoadShader(0, "gradient.fs");
+
     scene_1();
 
     #if defined(PLATFORM_WEB)
@@ -292,5 +305,6 @@ int main(){
         }
     #endif
     
+    if (USE_SHADERS) UnloadShader(shader);
     CloseWindow();
 }
